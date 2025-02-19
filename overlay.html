@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Payment Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #bitcoin-price {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #f7931a; /* Bitcoin orange */
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #bitcoin-price img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .price-up {
+            color: #00ff00 !important;
+        }
+
+        .price-down {
+            color: #ff0000 !important;
+        }
+
+        /* Add your custom styles here */
+    </style>
+</head>
+<body>
+    <div class="overlay-container">
+        <div id="bitcoin-price">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZjc5MzFhIj48cGF0aCBkPSJNMjMuNjM4IDkuOTk1Yy0xLjUtNi4xMjQtNy43NDctOS45NzItMTMuODcyLTguNDcyLTYuMTI0IDEuNS05Ljk3MiA3Ljc0Ny04LjQ3MiAxMy44NzIgMS41IDYuMTI0IDcuNzQ3IDkuOTcxIDEzLjg3MiA4LjQ3MSA2LjEyNC0xLjUgOS45NzEtNy43NDcgOC40NzItMTMuODcxem0tMTEuNjM4IDguOTQ1djIuMDZoLTJ2LTJoLTJ2LTJoNHYtLjA2YzIuNzMzLS4xMDQgNC0xLjk0MiA0LTMuODY0IDAtMi4wNTEtMS4zMTUtMy4zODEtMy4zMzMtMy42Nzl2LTIuMzk3aDJ2Mmgydi0yaDJ2Mi4wNmMtLjY2NiAwLTEgMC0xIDBoLjAyYy0yLjQyMi4xLTQgMS45NDEtNCAzLjg2IDAgMi4wNTMgMS4zMzMgMy4zODEgMy4zMzMgMy42Nzl2Mi4zOTdoLTJ2LTJ6Ii8+PC9zdmc+" alt="BTC">
+            <span>Loading...</span>
+        </div>
+    </div>
+
+    <script>
+        const priceElement = document.querySelector('#bitcoin-price span');
+        let lastPrice = 0;
+
+        async function fetchBitcoinPrice() {
+            try {
+                console.log('Fetching price...');  // Debug log
+                const response = await fetch('/api/bitcoin-price');
+                console.log('Response received:', response.status);  // Debug log
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Price data:', data);  // Debug log
+                
+                if (!data.bitcoin || !data.bitcoin.usd) {
+                    throw new Error('Invalid price data received');
+                }
+                
+                const currentPrice = data.bitcoin.usd;
+                
+                // Format price with commas and 2 decimal places
+                const formattedPrice = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(currentPrice);
+
+                // Add color animation based on price change
+                if (lastPrice > 0) {
+                    priceElement.classList.remove('price-up', 'price-down');
+                    if (currentPrice > lastPrice) {
+                        priceElement.classList.add('price-up');
+                    } else if (currentPrice < lastPrice) {
+                        priceElement.classList.add('price-down');
+                    }
+                }
+
+                priceElement.textContent = formattedPrice;
+                lastPrice = currentPrice;
+
+            } catch (error) {
+                console.error('Error fetching Bitcoin price:', error);
+                priceElement.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Fetch price immediately and then every 30 seconds
+        fetchBitcoinPrice();
+        setInterval(fetchBitcoinPrice, 30000);
+
+        // Add initial fetch error handling
+        window.addEventListener('load', () => {
+            console.log('Page loaded, initial fetch started');  // Debug log
+        });
+    </script>
+</body>
+</html> 
